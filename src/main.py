@@ -1,22 +1,20 @@
-from fastapi import FastAPI
-
-from src.api.health import health
-from src.api.opportunities import router as opportunities
-from src.api.auth import router as auth
-
-app = FastAPI(
-    title="Opportunity Radar Africa",
-)
-
-app.include_router(health)
-
-app.include_router(opportunities)
-
-app.include_router(auth)
+from src.logging import configure_logging
 
 
-if __name__ == "__main__":
+logger = configure_logging()
+
+
+def main():
+
+    logger.info(
+        "Opportunity Radar Africa started."
+    )
+
     print("=" * 40)
     print("Opportunity Radar Africa")
     print("Status: healthy")
     print("=" * 40)
+
+
+if __name__ == "__main__":
+    main()
