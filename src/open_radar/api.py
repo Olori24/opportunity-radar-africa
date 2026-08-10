@@ -9,7 +9,8 @@ class OpenRadarAPI:
     Lightweight ASGI API boundary for Open Radar.
 
     Security principles:
-    - API authentication protects analysis endpoints.
+    - API authentication protects production analysis endpoints.
+    - The demo endpoint is deliberately limited and accepts no source URLs.
     - Health checks remain public.
     - Request bodies are size-limited.
     - Invalid input is rejected before reaching the service.
@@ -17,6 +18,8 @@ class OpenRadarAPI:
     """
 
     MAX_BODY_SIZE = 1_000_000
+    DEMO_MAX_BODY_SIZE = 200_000
+    DEMO_MAX_OPPORTUNITIES = 25
 
     def __init__(
         self,
@@ -58,6 +61,13 @@ class OpenRadarAPI:
                     "version": "v1",
                 },
             )
+            return
+
+        if method == "POST" and path in (
+            "/demo/analyze",
+            "/v1/demo/analyze",
+        ):
+            await self._demo_analyze(receive, send)
             return
 
         if method == "POST" and path in (
@@ -128,6 +138,59 @@ class OpenRadarAPI:
             )
             return
 
+        await self._run_analysis(body, send)
+
+    async def _demo_analyze(self, receive, send):
+        body = await self._read_body(
+            receive,
+            max_body_size=self.DEMO_MAX_BODY_SIZE,
+        )
+
+        if body is None:
+            await self._json(
+                send,
+                400,
+                {
+                    "error": "invalid_json",
+                },
+            )
+            return
+
+        if not isinstance(body, dict):
+            await self._json(
+                send,
+                400,
+                {
+                    "error": "request_body_must_be_object",
+                },
+            )
+            return
+
+        opportunities = body.get("opportunities")
+        if not isinstance(opportunities, list):
+            await self._json(
+                send,
+                400,
+                {
+                    "error": "opportunities_must_be_list",
+                },
+            )
+            return
+
+        if len(opportunities) > self.DEMO_MAX_OPPORTUNITIES:
+            await self._json(
+                send,
+                400,
+                {
+                    "error": "demo_opportunity_limit_exceeded",
+                    "max_opportunities": self.DEMO_MAX_OPPORTUNITIES,
+                },
+            )
+            return
+
+        await self._run_analysis(body, send)
+
+    async def _run_analysis(self, body, send):
         if not isinstance(body, dict):
             await self._json(
                 send,
@@ -194,9 +257,14 @@ class OpenRadarAPI:
             result,
         )
 
-    async def _read_body(self, receive):
+    async def _read_body(self, receive, max_body_size=None):
         chunks = []
         total_size = 0
+        limit = (
+            max_body_size
+            if max_body_size is not None
+            else self.max_body_size
+        )
 
         while True:
             message = await receive()
@@ -214,7 +282,7 @@ class OpenRadarAPI:
 
             total_size += len(chunk)
 
-            if total_size > self.max_body_size:
+            if total_size > limit:
                 return None
 
             chunks.append(chunk)
