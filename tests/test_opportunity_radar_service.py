@@ -31,6 +31,14 @@ class FakeIngestion:
         ]
 
 
+class FakeRegistry:
+    def is_allowed(self, url):
+        return url in {
+            "https://example.org/opportunities",
+            "https://example.com/opportunities",
+        }
+
+
 class FakeClient:
     class Response:
         status_code = 200
@@ -94,6 +102,7 @@ def test_fetch_and_analyze_runs_pipeline():
     service = OpportunityRadarService(
         radar_engine=engine,
         ingestion=FakeIngestion(),
+        source_registry=FakeRegistry(),
     )
 
     result = service.fetch_and_analyze(
@@ -114,3 +123,51 @@ def test_fetch_and_analyze_runs_pipeline():
 
     assert opportunities[0]["title"] == "Grant A"
     assert opportunities[0]["normalized"] is True
+
+
+def test_fetch_and_analyze_deduplicates_opportunities():
+    class FakeClient:
+        def get(self, url):
+            class Response:
+                status_code = 200
+
+                def json(self):
+                    return [
+                        {
+                            "title": "AI Grant",
+                            "organization": "Example Foundation",
+                            "application_url": "https://example.com/apply",
+                            "deadline": "2026-12-31",
+                        },
+                        {
+                            "title": "AI Grant",
+                            "organization": "Example Foundation",
+                            "application_url": "https://example.com/apply",
+                            "deadline": "2026-12-31",
+                        },
+                    ]
+
+            return Response()
+
+    class FakeEngine:
+        def analyze(self, opportunities, country):
+            return {
+                "count": len(opportunities),
+                "country": country,
+            }
+
+    service = OpportunityRadarService(
+        radar_engine=FakeEngine(),
+        source_registry=FakeRegistry(),
+    )
+
+    result = service.fetch_and_analyze(
+        "https://example.com/opportunities",
+        "Nigeria",
+        FakeClient(),
+    )
+
+    assert result == {
+        "count": 1,
+        "country": "Nigeria",
+    }
