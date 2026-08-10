@@ -2,3 +2,16 @@
 name = "opportunity-radar-africa"
 version = "0.1.0"
 description = "AI-powered platform for discovering grants, jobs, scholarships, fellowships and startup opportunities across Africa."
+requires-python = ">=3.11"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    ".",
+    "src",
+]
