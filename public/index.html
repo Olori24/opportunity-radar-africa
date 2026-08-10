@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Open Radar Africa | Opportunity Intelligence</title>
+  <meta name="description" content="Test Open Radar's opportunity scoring, ranking, recommendation and explanation engine with real opportunity data." />
+  <style>
+    :root { color-scheme: dark; --bg:#08111f; --panel:#0f1b2d; --panel2:#13233a; --text:#eef5ff; --muted:#9eb0c7; --line:#243853; --accent:#6ee7b7; --accent2:#60a5fa; --danger:#fb7185; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif; background:radial-gradient(circle at top right,#153052 0,#08111f 42%); color:var(--text); }
+    .wrap { max-width:1180px; margin:auto; padding:32px 20px 70px; }
+    .hero { display:grid; grid-template-columns:1.25fr .75fr; gap:24px; align-items:stretch; }
+    .card { background:rgba(15,27,45,.88); border:1px solid var(--line); border-radius:20px; padding:24px; box-shadow:0 18px 60px rgba(0,0,0,.2); }
+    .eyebrow { color:var(--accent); font-weight:800; letter-spacing:.12em; text-transform:uppercase; font-size:12px; }
+    h1 { font-size:clamp(38px,7vw,72px); line-height:.96; margin:12px 0 18px; max-width:780px; }
+    h2 { margin:0 0 8px; }
+    p { color:var(--muted); line-height:1.6; }
+    .hero p { font-size:18px; max-width:700px; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:24px; }
+    .stat { background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:14px; }
+    .stat b { display:block; font-size:24px; }
+    .stat span { color:var(--muted); font-size:12px; }
+    .controls { margin-top:24px; display:grid; grid-template-columns:180px 1fr auto auto; gap:12px; align-items:end; }
+    label { display:block; color:var(--muted); font-size:12px; margin-bottom:6px; }
+    select, button, textarea { width:100%; border-radius:11px; border:1px solid var(--line); background:#0a1525; color:var(--text); padding:12px; font:inherit; }
+    textarea { min-height:230px; resize:vertical; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; }
+    button { cursor:pointer; font-weight:800; background:linear-gradient(135deg,#2563eb,#0ea5e9); border:0; min-width:150px; }
+    button.secondary { background:#17263c; border:1px solid var(--line); }
+    button:disabled { opacity:.55; cursor:wait; }
+    .workspace { margin-top:24px; display:grid; grid-template-columns:.9fr 1.1fr; gap:24px; }
+    .result { min-height:420px; }
+    .empty { display:grid; place-items:center; min-height:350px; text-align:center; color:var(--muted); }
+    .summary { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:18px 0; }
+    .pill { padding:10px 12px; background:var(--panel2); border-radius:12px; border:1px solid var(--line); }
+    .pill small { color:var(--muted); display:block; }
+    .opp { padding:16px 0; border-top:1px solid var(--line); }
+    .opp:first-child { border-top:0; }
+    .opp h3 { margin:0 0 5px; }
+    .score { color:var(--accent); font-weight:900; }
+    .meta { color:var(--muted); font-size:13px; }
+    .reason { color:#c9d6e8; margin-top:8px; }
+    .error { color:var(--danger); background:rgba(251,113,133,.08); border:1px solid rgba(251,113,133,.3); padding:12px; border-radius:12px; }
+    .footer { margin-top:22px; color:var(--muted); font-size:13px; text-align:center; }
+    @media (max-width:800px) { .hero,.workspace { grid-template-columns:1fr; } .controls { grid-template-columns:1fr 1fr; } .stats,.summary { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="card">
+        <div class="eyebrow">Open Radar Africa</div>
+        <h1>Find the opportunities worth your attention.</h1>
+        <p>Test the intelligence engine directly. Add grants, fellowships, accelerators, scholarships or jobs and see how Open Radar scores, ranks, recommends and explains them.</p>
+        <div class="stats">
+          <div class="stat"><b>177+</b><span>automated tests passing</span></div>
+          <div class="stat"><b>4</b><span>intelligence stages</span></div>
+          <div class="stat"><b>1</b><span>public demo endpoint</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>What you are testing</h2>
+        <p><strong>Normalize</strong> raw opportunity data, then <strong>score</strong> fit and readiness, <strong>rank</strong> the results, choose a recommendation, and generate an explanation.</p>
+        <p>No account. No API key. No external URL fetching from the demo. Your browser sends only the opportunity records you choose to test.</p>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="card">
+        <h2>Run a test</h2>
+        <p>Start with the sample data, then edit it to see how the ranking changes.</p>
+        <div class="controls">
+          <div><label for="country">Country</label><select id="country"><option>Nigeria</option><option>Ghana</option><option>Kenya</option><option>South Africa</option><option>Rwanda</option><option>Uganda</option></select></div>
+          <div></div>
+          <button class="secondary" id="sample">Load sample</button>
+          <button id="run">Analyze</button>
+        </div>
+        <div style="margin-top:14px"><label for="data">Opportunity JSON</label><textarea id="data" spellcheck="false"></textarea></div>
+        <div id="error" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card result">
+        <h2>Radar result</h2>
+        <div id="result" class="empty">Run the sample to see ranked opportunities, recommendation and explanation.</div>
+      </div>
+    </section>
+    <div class="footer">Open Radar Africa • Public demo • Production analysis remains protected</div>
+  </main>
+<script>
+const sample = [
+  {title:"Google for Startups Accelerator Africa", organization:"Google", category:"accelerator", country:"Nigeria", deadline:"2026-09-30", application_url:"https://startup.google.com/programs/accelerator/africa/", eligibility:"African technology startups", description:"Equity-free accelerator support for high-growth technology startups across Africa."},
+  {title:"Tony Elumelu Foundation Entrepreneurship Programme", organization:"Tony Elumelu Foundation", category:"grant", country:"Nigeria", deadline:"2026-03-31", application_url:"https://www.tefconnect.com/", eligibility:"African entrepreneurs", description:"Entrepreneurship programme providing training, mentorship and seed capital."},
+  {title:"African Development Bank Youth Entrepreneurship", organization:"African Development Bank", category:"development", country:"Nigeria", deadline:"2026-12-15", application_url:"https://www.afdb.org/", eligibility:"African youth entrepreneurs", description:"Development opportunities supporting youth entrepreneurship and enterprise growth."},
+  {title:"Example Global Opportunity", organization:"Example Foundation", category:"fellowship", country:"United States", deadline:"2026-11-30", application_url:"https://example.org/apply", eligibility:"Global applicants", description:"Illustrative opportunity outside the selected country."}
+];
+const data = document.getElementById('data');
+const country = document.getElementById('country');
+const result = document.getElementById('result');
+const error = document.getElementById('error');
+function loadSample(){ data.value = JSON.stringify(sample,null,2); error.innerHTML=''; }
+loadSample();
+document.getElementById('sample').onclick=loadSample;
+document.getElementById('run').onclick=async()=>{
+  error.innerHTML=''; result.className='empty'; result.textContent='Analyzing...';
+  let opportunities;
+  try { opportunities=JSON.parse(data.value); } catch(e){ error.innerHTML='<div class="error">Invalid JSON. Fix the opportunity data and try again.</div>'; result.textContent='Waiting for valid data.'; return; }
+  if(!Array.isArray(opportunities)){ error.innerHTML='<div class="error">Opportunity JSON must be an array.</div>'; result.textContent='Waiting for valid data.'; return; }
+  const button=document.getElementById('run'); button.disabled=true;
+  try {
+    const response=await fetch('/v1/demo/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:country.value,opportunities})});
+    const payload=await response.json();
+    if(!response.ok) throw new Error(payload.error || 'Analysis failed');
+    render(payload);
+  } catch(e){ error.innerHTML='<div class="error">'+e.message+'</div>'; result.textContent='The demo could not complete the analysis.'; }
+  finally { button.disabled=false; }
+};
+function render(payload){
+  const ranked=payload.opportunities||[];
+  const rec=payload.recommendation||{};
+  const ex=payload.explanation||{};
+  const top=ranked[0];
+  result.className='';
+  result.innerHTML=`<div class="summary"><div class="pill"><small>Ranked</small><strong>${ranked.length}</strong></div><div class="pill"><small>Recommendation</small><strong>${escapeHtml(rec.recommendation||'review')}</strong></div><div class="pill"><small>Confidence</small><strong>${Math.round((Number(rec.confidence)||0)*100)}%</strong></div></div>
+    <div class="opp"><h3>Recommended: ${escapeHtml(rec.opportunity?.title || top?.title || 'No opportunity')}</h3><div class="meta">${escapeHtml(rec.opportunity?.organization || top?.organization || '')}</div><div class="reason">${escapeHtml(rec.reason || ex.summary || 'No recommendation available.')}</div></div>
+    <h3 style="margin-top:22px">Ranked opportunities</h3>${ranked.map((o,i)=>`<div class="opp"><h3>#${i+1} ${escapeHtml(o.title||'Untitled')} <span class="score">${formatScore(o.score)}</span></h3><div class="meta">${escapeHtml(o.organization||'')} • ${escapeHtml(o.country||'')} • deadline ${escapeHtml(o.deadline||'unknown')}</div><div class="reason">${escapeHtml(o.explanation||o.reason||'Scored by the current intelligence pipeline.')}</div></div>`).join('')}
+    <div class="opp"><h3>Why</h3><div class="meta">Eligibility: ${escapeHtml(ex.eligibility||'unknown')} • Deadline: ${escapeHtml(ex.deadline||'unknown')}</div><div class="reason">${escapeHtml(ex.summary||'No explanation available.')}</div></div>`;
+}
+function formatScore(v){ const n=Number(v); return Number.isFinite(n)?` · ${n.toFixed(1)}`:''; }
+function escapeHtml(v){ return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
