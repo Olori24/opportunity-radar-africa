@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Open Radar Africa — test an AI-powered opportunity intelligence engine for grants, fellowships, accelerators and startup opportunities." />
+  <title>Open Radar Africa</title>
+  <style>
+    :root { --bg:#07111f; --panel:#0d1b2d; --panel2:#12243a; --text:#eef5ff; --muted:#9eb0c7; --line:#223852; --accent:#5eead4; --accent2:#60a5fa; --danger:#fb7185; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif; background:radial-gradient(circle at 20% 0%,#12304a 0,#07111f 42%); color:var(--text); min-height:100vh; }
+    .wrap { width:min(1100px,92%); margin:auto; padding:42px 0 70px; }
+    .nav { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:56px; }
+    .brand { font-weight:800; letter-spacing:-.04em; font-size:1.15rem; }
+    .badge { border:1px solid #29506d; background:#0b1c2e; color:var(--accent); border-radius:999px; padding:7px 11px; font-size:.78rem; }
+    .hero { max-width:820px; }
+    h1 { font-size:clamp(2.5rem,7vw,5.5rem); line-height:.95; letter-spacing:-.065em; margin:0 0 22px; }
+    .hero p { color:var(--muted); font-size:1.08rem; line-height:1.7; max-width:720px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:34px; }
+    .card { background:rgba(13,27,45,.88); border:1px solid var(--line); border-radius:20px; padding:22px; box-shadow:0 18px 50px rgba(0,0,0,.18); }
+    .card h2 { margin:0 0 14px; font-size:1.05rem; }
+    label { display:block; color:var(--muted); font-size:.82rem; margin:12px 0 7px; }
+    input, textarea { width:100%; border:1px solid var(--line); background:#081625; color:var(--text); border-radius:12px; padding:12px 13px; outline:none; }
+    textarea { min-height:220px; resize:vertical; font:inherit; line-height:1.5; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+    button { border:0; border-radius:12px; padding:12px 16px; font-weight:750; cursor:pointer; background:var(--accent); color:#05201c; }
+    button.secondary { background:#18304a; color:var(--text); border:1px solid var(--line); }
+    button:disabled { opacity:.55; cursor:wait; }
+    .status { min-height:24px; margin-top:12px; color:var(--muted); font-size:.86rem; }
+    .result { margin-top:18px; display:none; }
+    .recommendation { border:1px solid #2b526d; background:linear-gradient(135deg,#10263b,#0b1727); border-radius:16px; padding:17px; }
+    .rec { color:var(--accent); font-weight:800; text-transform:uppercase; font-size:.78rem; letter-spacing:.08em; }
+    .title { font-size:1.3rem; font-weight:800; margin:6px 0; }
+    .reason { color:var(--muted); line-height:1.55; }
+    .score { font-size:2rem; font-weight:850; color:var(--accent2); }
+    .opps { margin-top:14px; display:grid; gap:10px; }
+    .opp { padding:14px; border:1px solid var(--line); border-radius:13px; background:#0a1829; }
+    .opp strong { display:block; margin-bottom:5px; }
+    .meta { color:var(--muted); font-size:.82rem; line-height:1.5; }
+    pre { white-space:pre-wrap; word-break:break-word; color:#b9c9dc; font-size:.75rem; margin:14px 0 0; display:none; }
+    .footer { margin-top:42px; color:#71849c; font-size:.8rem; }
+    @media (max-width:760px) { .grid { grid-template-columns:1fr; } .wrap { padding-top:24px; } .nav { margin-bottom:38px; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="nav"><div class="brand">OPEN RADAR AFRICA</div><div class="badge">PUBLIC DEMO · v1</div></div>
+    <section class="hero">
+      <h1>Find the opportunities that actually fit.</h1>
+      <p>Open Radar turns opportunity data into ranked, explainable recommendations for founders, students, researchers and professionals. This public demo uses the same intelligence pipeline as the API.</p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Test the intelligence engine</h2>
+        <label for="country">Target country</label>
+        <input id="country" value="Nigeria" />
+        <label for="data">Opportunities (JSON)</label>
+        <textarea id="data"></textarea>
+        <div class="actions">
+          <button class="secondary" id="sample">Load sample data</button>
+          <button id="analyze">Analyze opportunities</button>
+        </div>
+        <div class="status" id="status"></div>
+      </div>
+
+      <div class="card result" id="result">
+        <h2>Radar result</h2>
+        <div class="recommendation" id="recommendation"></div>
+        <div class="opps" id="opps"></div>
+        <pre id="raw"></pre>
+      </div>
+    </section>
+    <div class="footer">Open Radar Africa · Built for transparent, verified opportunity intelligence.</div>
+  </main>
+<script>
+const sample = [
+  {title:"AI for Africa Startup Grant", organization:"Example Foundation", country:"Nigeria", category:"startup", amount:"$25,000", deadline:"2026-12-31", application_url:"https://example.com/ai-africa-grant", description:"Funding for African startups building practical AI products."},
+  {title:"Africa Innovation Fellowship", organization:"Example Institute", country:"Nigeria", category:"fellowship", deadline:"2026-11-15", application_url:"https://example.com/innovation-fellowship", description:"Fellowship for emerging technology and innovation leaders."},
+  {title:"Continental Accelerator Programme", organization:"Example Accelerator", country:"Africa", category:"accelerator", deadline:"2026-10-20", application_url:"https://example.com/accelerator", description:"Growth support, mentorship and investor preparation for African startups."},
+  {title:"Public Health Research Award", organization:"Example Research Fund", country:"Nigeria", category:"research", amount:"$10,000", deadline:"2027-01-20", application_url:"https://example.com/research", description:"Research funding for public-health innovation."}
+];
+const data = document.getElementById('data');
+const status = document.getElementById('status');
+const result = document.getElementById('result');
+const recommendation = document.getElementById('recommendation');
+const opps = document.getElementById('opps');
+const raw = document.getElementById('raw');
+function loadSample(){ data.value=JSON.stringify(sample,null,2); status.textContent='Sample opportunities loaded.'; }
+loadSample();
+document.getElementById('sample').onclick=loadSample;
+document.getElementById('analyze').onclick=async()=>{
+  let opportunities;
+  try { opportunities=JSON.parse(data.value); } catch(e){ status.textContent='Invalid JSON. Fix the opportunity data and try again.'; return; }
+  if(!Array.isArray(opportunities)){ status.textContent='Opportunities must be a JSON array.'; return; }
+  const button=document.getElementById('analyze'); button.disabled=true; status.textContent='Running radar intelligence…'; result.style.display='block';
+  try{
+    const res=await fetch('/v1/demo/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:document.getElementById('country').value,opportunities})});
+    const body=await res.json();
+    if(!res.ok) throw new Error(body.error||'Analysis failed');
+    render(body); status.textContent=`Analysis complete · ${body.opportunities?.length||0} opportunities ranked.`;
+  }catch(e){ status.textContent=e.message; recommendation.innerHTML='<div class="reason">The demo API could not complete the analysis.</div>'; opps.innerHTML=''; }
+  finally{ button.disabled=false; }
+};
+function render(body){
+  const rec=body.recommendation||{}; const op=rec.opportunity||{}; const ex=body.explanation||{};
+  recommendation.innerHTML=`<div class="rec">Recommendation: ${esc(rec.recommendation||'review')}</div><div class="title">${esc(op.title||'No specific opportunity recommended')}</div><div class="score">${Number(ex.score||0).toFixed(1)}</div><div class="reason">${esc(rec.reason||ex.summary||'')}</div>`;
+  const ranked=Array.isArray(body.opportunities)?body.opportunities:[];
+  opps.innerHTML=ranked.slice(0,10).map((x,i)=>`<div class="opp"><strong>#${i+1} · ${esc(x.title||x.name||'Untitled opportunity')}</strong><div class="meta">${esc(x.organization||'')} ${x.deadline?'· Deadline: '+esc(x.deadline):''} ${x.score!=null?'· Score: '+esc(String(x.score)):''}</div></div>`).join('') || '<div class="reason">No opportunities available.</div>';
+  raw.textContent=JSON.stringify(body,null,2); raw.style.display='block';
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+</script>
+</body>
+</html>
