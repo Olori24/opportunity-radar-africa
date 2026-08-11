@@ -120,11 +120,6 @@ class OpportunityAfDBSource:
         "sao tome": ("sao tome",),
     }
 
-    CATEGORY_PREFIXES = {
-        "procurement": NOTICE_PREFIXES,
-        "consulting": ("eoi -", "ami -"),
-    }
-
     def __init__(self, fetch_text=None):
         self._fetch_text = fetch_text or self._default_fetch_text
 
@@ -133,8 +128,15 @@ class OpportunityAfDBSource:
         if not country:
             return []
 
+        allowed = {
+            str(value).strip().lower()
+            for value in (categories or [])
+            if str(value).strip()
+        }
+        if allowed and not allowed.intersection({"procurement", "consulting"}):
+            return []
+
         aliases = self._aliases_for(country)
-        allowed = {str(value).strip().lower() for value in (categories or []) if str(value).strip()}
         query_text = str(query or "").strip().lower()
         html = self._fetch_text(self.SOURCE_URL)
 
