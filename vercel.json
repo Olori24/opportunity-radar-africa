@@ -8,10 +8,6 @@
   ],
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/public/index.html"
-    },
-    {
       "source": "/v1/:path*",
       "destination": "/api/index.py"
     },
@@ -25,6 +21,14 @@
     },
     {
       "source": "/analyze",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/live",
       "destination": "/api/index.py"
     }
   ]
