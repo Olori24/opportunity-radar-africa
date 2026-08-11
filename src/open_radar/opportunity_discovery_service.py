@@ -5,19 +5,12 @@ from open_radar.opportunity_world_bank_source import OpportunityWorldBankSource
 
 
 class OpportunityDiscoveryService:
-    """Discover live opportunities and run them through the Radar pipeline."""
+    """Discover live World Bank opportunities and run the Radar pipeline."""
 
     MAX_LIMIT = 20
     SUPPORTED_CATEGORIES = {
         "procurement",
         "consulting",
-        "consultancy",
-        "grant",
-        "startup",
-        "accelerator",
-        "fellowship",
-        "scholarship",
-        "job",
     }
 
     def __init__(
@@ -43,7 +36,6 @@ class OpportunityDiscoveryService:
             query=query,
             limit=limit,
         )
-
         normalized = self.ingestion.normalize_many(raw)
         deduplicated = self.deduplicator.deduplicate(normalized)
         analysis = self.radar_engine.analyze(
