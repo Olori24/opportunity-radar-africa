@@ -6,8 +6,11 @@ class OpportunitySourceConnector:
     Safe boundary between external opportunity sources
     and the Opportunity Radar pipeline.
 
-    The transport is injected so network access can be
-    tested without making real HTTP requests.
+    The connector validates the source against an explicit
+    OpportunitySourceRegistry before allowing network access.
+
+    The transport and registry are injected so both network access
+    and source policy can be tested without external requests.
     """
 
     def __init__(self, transport, registry=None):
@@ -16,7 +19,7 @@ class OpportunitySourceConnector:
 
     def fetch(self, url):
         """
-        Fetch a list of raw opportunities from a source.
+        Fetch raw opportunities from an approved source.
 
         Invalid URLs, disallowed sources, transport failures,
         and malformed responses return an empty list rather than
@@ -61,6 +64,4 @@ class OpportunitySourceConnector:
         except ValueError:
             return False
 
-        return parsed.scheme in {"http", "https"} and bool(
-            parsed.netloc
-        )
+        return parsed.scheme in {"http", "https"} and bool(parsed.netloc)

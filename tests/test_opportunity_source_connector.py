@@ -5,6 +5,11 @@ from open_radar.opportunity_source_connector import (
 )
 
 
+class FakeRegistry:
+    def is_allowed(self, url):
+        return url == "https://example.org/opportunities"
+
+
 class FakeTransport:
     def __init__(self, response=None, error=None):
         self.response = response
@@ -30,6 +35,7 @@ def test_connector_fetches_source():
 
     connector = OpportunitySourceConnector(
         transport=transport,
+        registry=FakeRegistry(),
     )
 
     result = connector.fetch(
@@ -49,6 +55,7 @@ def test_connector_returns_empty_list_for_empty_response():
 
     connector = OpportunitySourceConnector(
         transport=transport,
+        registry=FakeRegistry(),
     )
 
     assert connector.fetch(
@@ -61,6 +68,7 @@ def test_connector_rejects_missing_url():
 
     connector = OpportunitySourceConnector(
         transport=transport,
+        registry=FakeRegistry(),
     )
 
     assert connector.fetch("") == []
@@ -74,6 +82,7 @@ def test_connector_handles_transport_failure():
 
     connector = OpportunitySourceConnector(
         transport=transport,
+        registry=FakeRegistry(),
     )
 
     assert connector.fetch(
@@ -90,6 +99,7 @@ def test_connector_does_not_mutate_transport_data():
 
     connector = OpportunitySourceConnector(
         transport=transport,
+        registry=FakeRegistry(),
     )
 
     connector.fetch(
@@ -108,6 +118,7 @@ def test_connector_rejects_non_list_response():
 
     connector = OpportunitySourceConnector(
         transport=transport,
+        registry=FakeRegistry(),
     )
 
     assert connector.fetch(
@@ -120,6 +131,7 @@ def test_connector_rejects_invalid_url_scheme():
 
     connector = OpportunitySourceConnector(
         transport=transport,
+        registry=FakeRegistry(),
     )
 
     assert connector.fetch(
