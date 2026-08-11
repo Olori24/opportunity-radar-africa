@@ -1,3 +1,4 @@
+from open_radar.opportunity_afdb_source import OpportunityAfDBSource
 from open_radar.opportunity_deduplicator import OpportunityDeduplicator
 from open_radar.opportunity_ingestion import OpportunityIngestion
 from open_radar.opportunity_nigeria_official_source import OpportunityNigeriaOfficialSource
@@ -27,6 +28,7 @@ class OpportunityDiscoveryService:
         deduplicator=None,
         world_bank_source=None,
         nigeria_official_source=None,
+        afdb_source=None,
     ):
         self.radar_engine = radar_engine or OpportunityRadarEngine()
         self.ingestion = ingestion or OpportunityIngestion()
@@ -35,6 +37,7 @@ class OpportunityDiscoveryService:
         self.nigeria_official_source = (
             nigeria_official_source or OpportunityNigeriaOfficialSource()
         )
+        self.afdb_source = afdb_source or OpportunityAfDBSource()
 
     def discover(self, country, categories=None, query=None, limit=10):
         country = self._validate_country(country)
@@ -88,6 +91,30 @@ class OpportunityDiscoveryService:
             sources.append({
                 "id": "world-bank",
                 "name": "World Bank Group",
+                "reliability": "official",
+                "status": "error",
+                "count": 0,
+            })
+
+        try:
+            afdb = self.afdb_source.discover(
+                country=country,
+                categories=categories,
+                query=query,
+                limit=limit,
+            )
+            raw.extend(afdb)
+            sources.append({
+                "id": "afdb-procurement",
+                "name": "African Development Bank Group",
+                "reliability": "official",
+                "status": "live",
+                "count": len(afdb),
+            })
+        except Exception:
+            sources.append({
+                "id": "afdb-procurement",
+                "name": "African Development Bank Group",
                 "reliability": "official",
                 "status": "error",
                 "count": 0,
