@@ -27,5 +27,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Verify source tree
+        run: |
+          echo "CI commit: $(git rev-parse HEAD)"
+          test -f src/open_radar/opportunity_deduplicator.py
+          test -f src/open_radar/opportunity_source_registry.py
+          PYTHONPATH=src python -c "import open_radar.opportunity_deduplicator as d; print('deduplicator:', d.__file__)"
+          PYTHONPATH=src python -c "import open_radar.opportunity_source_registry as r; print('registry:', r.__file__)"
+
       - name: Run tests
         run: PYTHONPATH=src python -m pytest -q
