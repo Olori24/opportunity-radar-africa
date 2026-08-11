@@ -1,5 +1,6 @@
 from open_radar.opportunity_afdb_source import OpportunityAfDBSource
 from open_radar.opportunity_deduplicator import OpportunityDeduplicator
+from open_radar.opportunity_eu_source import OpportunityEUSource
 from open_radar.opportunity_ingestion import OpportunityIngestion
 from open_radar.opportunity_nigeria_official_source import OpportunityNigeriaOfficialSource
 from open_radar.opportunity_radar_engine import OpportunityRadarEngine
@@ -29,6 +30,7 @@ class OpportunityDiscoveryService:
         world_bank_source=None,
         nigeria_official_source=None,
         afdb_source=None,
+        eu_source=None,
     ):
         self.radar_engine = radar_engine or OpportunityRadarEngine()
         self.ingestion = ingestion or OpportunityIngestion()
@@ -38,6 +40,7 @@ class OpportunityDiscoveryService:
             nigeria_official_source or OpportunityNigeriaOfficialSource()
         )
         self.afdb_source = afdb_source or OpportunityAfDBSource()
+        self.eu_source = eu_source or OpportunityEUSource()
 
     def discover(self, country, categories=None, query=None, limit=10):
         country = self._validate_country(country)
@@ -115,6 +118,30 @@ class OpportunityDiscoveryService:
             sources.append({
                 "id": "afdb-procurement",
                 "name": "African Development Bank Group",
+                "reliability": "official",
+                "status": "error",
+                "count": 0,
+            })
+
+        try:
+            eu = self.eu_source.discover(
+                country=country,
+                categories=categories,
+                query=query,
+                limit=limit,
+            )
+            raw.extend(eu)
+            sources.append({
+                "id": "european-union-funding-tenders",
+                "name": "European Commission Funding & Tenders Portal",
+                "reliability": "official",
+                "status": "live",
+                "count": len(eu),
+            })
+        except Exception:
+            sources.append({
+                "id": "european-union-funding-tenders",
+                "name": "European Commission Funding & Tenders Portal",
                 "reliability": "official",
                 "status": "error",
                 "count": 0,
