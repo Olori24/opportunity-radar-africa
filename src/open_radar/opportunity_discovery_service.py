@@ -9,6 +9,12 @@ class OpportunityDiscoveryService:
 
     MAX_LIMIT = 20
     SUPPORTED_CATEGORIES = {
+        "startup",
+        "grant",
+        "accelerator",
+        "fellowship",
+        "scholarship",
+        "job",
         "procurement",
         "consulting",
     }
