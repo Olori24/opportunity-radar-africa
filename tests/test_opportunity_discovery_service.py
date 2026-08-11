@@ -2,24 +2,26 @@ from open_radar.opportunity_discovery_service import OpportunityDiscoveryService
 
 
 class FakeSource:
-    def __init__(self):
+    def __init__(self, title="Tender A", category="procurement"):
         self.calls = []
+        self.title = title
+        self.category = category
 
     def discover(self, country, categories=None, query=None, limit=20):
         self.calls.append((country, categories, query, limit))
         return [
             {
-                "title": "Tender A",
+                "title": self.title,
                 "organization": "World Bank Group",
                 "country": country,
-                "category": "procurement",
+                "category": self.category,
                 "deadline": "2026-12-31",
             },
             {
-                "title": "Tender A",
+                "title": self.title,
                 "organization": "World Bank Group",
                 "country": country,
-                "category": "procurement",
+                "category": self.category,
                 "deadline": "2026-12-31",
             },
         ]
@@ -44,18 +46,20 @@ class FakeEngine:
         }
 
 
-def test_discovery_runs_source_normalization_deduplication_and_analysis():
-    source = FakeSource()
+def test_discovery_runs_all_sources_normalization_deduplication_and_analysis():
+    world_bank = FakeSource()
+    nigeria = FakeSource(title="Grant A", category="grant")
     service = OpportunityDiscoveryService(
         radar_engine=FakeEngine(),
         ingestion=FakeIngestion(),
         deduplicator=FakeDeduplicator(),
-        world_bank_source=source,
+        world_bank_source=world_bank,
+        nigeria_official_source=nigeria,
     )
 
     result = service.discover(
         country="Nigeria",
-        categories=["procurement"],
+        categories=["procurement", "grant"],
         query="digital",
         limit=5,
     )
@@ -64,23 +68,27 @@ def test_discovery_runs_source_normalization_deduplication_and_analysis():
     assert result["opportunities"][0]["normalized"] is True
     assert result["query"] == {
         "country": "Nigeria",
-        "categories": ["procurement"],
+        "categories": ["procurement", "grant"],
         "query": "digital",
         "limit": 5,
     }
-    assert result["sources"][0]["id"] == "world-bank"
-    assert source.calls == [
-        ("Nigeria", ["procurement"], "digital", 5)
-    ]
+    assert {source["id"] for source in result["sources"]} == {
+        "world-bank",
+        "nigeria-official-programmes",
+    }
+    assert world_bank.calls == [("Nigeria", ["procurement", "grant"], "digital", 5)]
+    assert nigeria.calls == [("Nigeria", ["procurement", "grant"], "digital", 5)]
 
 
 def test_discovery_accepts_public_opportunity_categories():
     source = FakeSource()
+    nigeria = FakeSource(title="Grant A", category="grant")
     service = OpportunityDiscoveryService(
         radar_engine=FakeEngine(),
         ingestion=FakeIngestion(),
         deduplicator=FakeDeduplicator(),
         world_bank_source=source,
+        nigeria_official_source=nigeria,
     )
 
     categories = [
@@ -94,25 +102,20 @@ def test_discovery_accepts_public_opportunity_categories():
         "consulting",
     ]
 
-    result = service.discover(
-        country="Nigeria",
-        categories=categories,
-        limit=5,
-    )
+    result = service.discover("Nigeria", categories=categories, limit=5)
 
     assert result["query"]["categories"] == categories
-    assert source.calls == [
-        ("Nigeria", categories, None, 5)
-    ]
+    assert source.calls == [("Nigeria", categories, None, 5)]
+    assert nigeria.calls == [("Nigeria", categories, None, 5)]
 
 
 def test_discovery_normalizes_and_deduplicates_categories():
-    source = FakeSource()
     service = OpportunityDiscoveryService(
         radar_engine=FakeEngine(),
         ingestion=FakeIngestion(),
         deduplicator=FakeDeduplicator(),
-        world_bank_source=source,
+        world_bank_source=FakeSource(),
+        nigeria_official_source=FakeSource(title="Grant A", category="grant"),
     )
 
     result = service.discover(
@@ -129,6 +132,7 @@ def test_discovery_rejects_unknown_category():
         ingestion=FakeIngestion(),
         deduplicator=FakeDeduplicator(),
         world_bank_source=FakeSource(),
+        nigeria_official_source=FakeSource(title="Grant A", category="grant"),
     )
 
     try:
