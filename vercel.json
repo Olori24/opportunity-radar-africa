@@ -6,26 +6,22 @@
       "use": "@vercel/python"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/",
-      "dest": "/index.html"
+      "source": "/v1/:path*",
+      "destination": "/api/index.py"
     },
     {
-      "src": "/live",
-      "dest": "/index.html"
+      "source": "/health",
+      "destination": "/api/index.py"
     },
     {
-      "src": "/v1/(.*)",
-      "dest": "api/index.py"
+      "source": "/demo/analyze",
+      "destination": "/api/index.py"
     },
     {
-      "src": "/(health|demo/analyze|analyze)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/analyze",
+      "destination": "/api/index.py"
     }
   ]
 }
