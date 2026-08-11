@@ -9,11 +9,11 @@
   "routes": [
     {
       "src": "/",
-      "dest": "/live.html"
+      "dest": "/index.html"
     },
     {
       "src": "/live",
-      "dest": "/live.html"
+      "dest": "/index.html"
     },
     {
       "src": "/v1/(.*)",
