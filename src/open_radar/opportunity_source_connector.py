@@ -10,19 +10,28 @@ class OpportunitySourceConnector:
     tested without making real HTTP requests.
     """
 
-    def __init__(self, transport):
+    def __init__(self, transport, registry=None):
         self.transport = transport
+        self.registry = registry
 
     def fetch(self, url):
         """
         Fetch a list of raw opportunities from a source.
 
-        Invalid URLs, transport failures, and malformed responses
-        return an empty list rather than crashing the Radar.
+        Invalid URLs, disallowed sources, transport failures,
+        and malformed responses return an empty list rather than
+        crashing the Radar.
         """
 
         if not self._valid_url(url):
             return []
+
+        if self.registry is not None:
+            try:
+                if not self.registry.is_allowed(url):
+                    return []
+            except Exception:
+                return []
 
         try:
             response = self.transport.fetch(url)
