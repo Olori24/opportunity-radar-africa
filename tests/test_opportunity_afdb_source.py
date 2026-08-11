@@ -44,3 +44,15 @@ def test_afdb_source_query_filters_results():
 
     assert len(results) == 1
     assert "Digital Health" in results[0]["title"]
+
+
+def test_afdb_source_skips_network_when_categories_cannot_match():
+    called = []
+
+    def fetch_text(url):
+        called.append(url)
+        return "<html></html>"
+
+    source = OpportunityAfDBSource(fetch_text=fetch_text)
+    assert source.discover("Nigeria", categories=["grant"]) == []
+    assert called == []
