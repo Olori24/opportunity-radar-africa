@@ -24,10 +24,6 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/",
-      "destination": "/api/index.py"
-    },
-    {
       "source": "/live",
       "destination": "/api/index.py"
     }
