@@ -74,6 +74,55 @@ def test_discovery_runs_source_normalization_deduplication_and_analysis():
     ]
 
 
+def test_discovery_accepts_public_opportunity_categories():
+    source = FakeSource()
+    service = OpportunityDiscoveryService(
+        radar_engine=FakeEngine(),
+        ingestion=FakeIngestion(),
+        deduplicator=FakeDeduplicator(),
+        world_bank_source=source,
+    )
+
+    categories = [
+        "startup",
+        "grant",
+        "accelerator",
+        "fellowship",
+        "scholarship",
+        "job",
+        "procurement",
+        "consulting",
+    ]
+
+    result = service.discover(
+        country="Nigeria",
+        categories=categories,
+        limit=5,
+    )
+
+    assert result["query"]["categories"] == categories
+    assert source.calls == [
+        ("Nigeria", categories, None, 5)
+    ]
+
+
+def test_discovery_normalizes_and_deduplicates_categories():
+    source = FakeSource()
+    service = OpportunityDiscoveryService(
+        radar_engine=FakeEngine(),
+        ingestion=FakeIngestion(),
+        deduplicator=FakeDeduplicator(),
+        world_bank_source=source,
+    )
+
+    result = service.discover(
+        "Nigeria",
+        categories=[" Startup ", "startup", "GRANT", "grant"],
+    )
+
+    assert result["query"]["categories"] == ["startup", "grant"]
+
+
 def test_discovery_rejects_unknown_category():
     service = OpportunityDiscoveryService(
         radar_engine=FakeEngine(),
