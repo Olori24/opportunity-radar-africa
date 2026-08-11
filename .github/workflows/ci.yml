@@ -32,8 +32,12 @@ jobs:
           echo "CI commit: $(git rev-parse HEAD)"
           test -f src/open_radar/opportunity_deduplicator.py
           test -f src/open_radar/opportunity_source_registry.py
+          test -f src/open_radar/opportunity_afdb_source.py
+          test -f src/open_radar/opportunity_eu_source.py
           PYTHONPATH=src python -c "import open_radar.opportunity_deduplicator as d; print('deduplicator:', d.__file__)"
           PYTHONPATH=src python -c "import open_radar.opportunity_source_registry as r; print('registry:', r.__file__)"
+          PYTHONPATH=src python -c "import open_radar.opportunity_afdb_source as a; print('afdb:', a.__file__)"
+          PYTHONPATH=src python -c "import open_radar.opportunity_eu_source as e; print('eu:', e.__file__)"
 
       - name: Run tests
         run: PYTHONPATH=src python -m pytest -q
