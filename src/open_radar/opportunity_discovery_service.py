@@ -1,11 +1,12 @@
 from open_radar.opportunity_deduplicator import OpportunityDeduplicator
 from open_radar.opportunity_ingestion import OpportunityIngestion
+from open_radar.opportunity_nigeria_official_source import OpportunityNigeriaOfficialSource
 from open_radar.opportunity_radar_engine import OpportunityRadarEngine
 from open_radar.opportunity_world_bank_source import OpportunityWorldBankSource
 
 
 class OpportunityDiscoveryService:
-    """Discover live World Bank opportunities and run the Radar pipeline."""
+    """Discover live opportunities from approved official sources."""
 
     MAX_LIMIT = 20
     SUPPORTED_CATEGORIES = {
@@ -25,23 +26,73 @@ class OpportunityDiscoveryService:
         ingestion=None,
         deduplicator=None,
         world_bank_source=None,
+        nigeria_official_source=None,
     ):
         self.radar_engine = radar_engine or OpportunityRadarEngine()
         self.ingestion = ingestion or OpportunityIngestion()
         self.deduplicator = deduplicator or OpportunityDeduplicator()
         self.world_bank_source = world_bank_source or OpportunityWorldBankSource()
+        self.nigeria_official_source = (
+            nigeria_official_source or OpportunityNigeriaOfficialSource()
+        )
 
     def discover(self, country, categories=None, query=None, limit=10):
         country = self._validate_country(country)
         categories = self._normalize_categories(categories)
         limit = max(1, min(int(limit), self.MAX_LIMIT))
 
-        raw = self.world_bank_source.discover(
-            country=country,
-            categories=categories,
-            query=query,
-            limit=limit,
-        )
+        raw = []
+        sources = []
+
+        try:
+            official_nigeria = self.nigeria_official_source.discover(
+                country=country,
+                categories=categories,
+                query=query,
+                limit=limit,
+            )
+            raw.extend(official_nigeria)
+            if official_nigeria:
+                sources.append({
+                    "id": "nigeria-official-programmes",
+                    "name": "Official Nigerian Government & DFI Programmes",
+                    "reliability": "official",
+                    "status": "live",
+                    "count": len(official_nigeria),
+                })
+        except Exception:
+            sources.append({
+                "id": "nigeria-official-programmes",
+                "name": "Official Nigerian Government & DFI Programmes",
+                "reliability": "official",
+                "status": "error",
+                "count": 0,
+            })
+
+        try:
+            world_bank = self.world_bank_source.discover(
+                country=country,
+                categories=categories,
+                query=query,
+                limit=limit,
+            )
+            raw.extend(world_bank)
+            sources.append({
+                "id": "world-bank",
+                "name": "World Bank Group",
+                "reliability": "official",
+                "status": "live",
+                "count": len(world_bank),
+            })
+        except Exception:
+            sources.append({
+                "id": "world-bank",
+                "name": "World Bank Group",
+                "reliability": "official",
+                "status": "error",
+                "count": 0,
+            })
+
         normalized = self.ingestion.normalize_many(raw)
         deduplicated = self.deduplicator.deduplicate(normalized)
         analysis = self.radar_engine.analyze(
@@ -57,14 +108,7 @@ class OpportunityDiscoveryService:
                 "query": query.strip() if isinstance(query, str) else "",
                 "limit": limit,
             },
-            "sources": [
-                {
-                    "id": "world-bank",
-                    "name": "World Bank Group",
-                    "reliability": "official",
-                    "status": "live",
-                }
-            ],
+            "sources": sources,
         }
 
     def _normalize_categories(self, categories):
