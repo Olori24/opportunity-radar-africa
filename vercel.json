@@ -8,6 +8,10 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/public/index.html"
+    },
+    {
       "source": "/v1/:path*",
       "destination": "/api/index.py"
     },
