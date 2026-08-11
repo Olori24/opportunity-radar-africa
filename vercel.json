@@ -12,6 +12,10 @@
       "dest": "/index.html"
     },
     {
+      "src": "/live",
+      "dest": "/live.html"
+    },
+    {
       "src": "/v1/(.*)",
       "dest": "api/index.py"
     },
