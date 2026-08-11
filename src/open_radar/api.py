@@ -1,6 +1,7 @@
 import json
 import os
 
+from open_radar.opportunity_discovery_service import OpportunityDiscoveryService
 from open_radar.opportunity_radar_service import OpportunityRadarService
 
 
@@ -10,6 +11,7 @@ class OpenRadarAPI:
 
     Security principles:
     - API authentication protects production analysis endpoints.
+    - Live discovery is public but tightly bounded.
     - The demo endpoint is deliberately limited and accepts no source URLs.
     - Health checks remain public.
     - Request bodies are size-limited.
@@ -20,14 +22,17 @@ class OpenRadarAPI:
     MAX_BODY_SIZE = 1_000_000
     DEMO_MAX_BODY_SIZE = 200_000
     DEMO_MAX_OPPORTUNITIES = 25
+    DISCOVER_MAX_BODY_SIZE = 20_000
 
     def __init__(
         self,
         service=None,
         api_key=None,
         max_body_size=None,
+        discovery_service=None,
     ):
         self.service = service or OpportunityRadarService()
+        self.discovery_service = discovery_service or OpportunityDiscoveryService()
 
         self.api_key = (
             api_key
@@ -71,6 +76,13 @@ class OpenRadarAPI:
             return
 
         if method == "POST" and path in (
+            "/discover",
+            "/v1/discover",
+        ):
+            await self._discover(receive, send)
+            return
+
+        if method == "POST" and path in (
             "/analyze",
             "/v1/analyze",
         ):
@@ -96,24 +108,12 @@ class OpenRadarAPI:
         )
 
     def _authorized(self, scope):
-        """
-        Validate the X-API-Key header.
-
-        Authentication fails closed whenever an API key
-        is configured.
-        """
-
+        """Validate the X-API-Key header."""
         if not self.api_key:
             return False
 
-        headers = dict(
-            scope.get("headers", [])
-        )
-
-        supplied_key = headers.get(
-            b"x-api-key",
-            b"",
-        )
+        headers = dict(scope.get("headers", []))
+        supplied_key = headers.get(b"x-api-key", b"")
 
         if not isinstance(supplied_key, bytes):
             return False
@@ -129,13 +129,7 @@ class OpenRadarAPI:
         body = await self._read_body(receive)
 
         if body is None:
-            await self._json(
-                send,
-                400,
-                {
-                    "error": "invalid_json",
-                },
-            )
+            await self._json(send, 400, {"error": "invalid_json"})
             return
 
         await self._run_analysis(body, send)
@@ -147,22 +141,14 @@ class OpenRadarAPI:
         )
 
         if body is None:
-            await self._json(
-                send,
-                400,
-                {
-                    "error": "invalid_json",
-                },
-            )
+            await self._json(send, 400, {"error": "invalid_json"})
             return
 
         if not isinstance(body, dict):
             await self._json(
                 send,
                 400,
-                {
-                    "error": "request_body_must_be_object",
-                },
+                {"error": "request_body_must_be_object"},
             )
             return
 
@@ -171,9 +157,7 @@ class OpenRadarAPI:
             await self._json(
                 send,
                 400,
-                {
-                    "error": "opportunities_must_be_list",
-                },
+                {"error": "opportunities_must_be_list"},
             )
             return
 
@@ -190,14 +174,95 @@ class OpenRadarAPI:
 
         await self._run_analysis(body, send)
 
+    async def _discover(self, receive, send):
+        body = await self._read_body(
+            receive,
+            max_body_size=self.DISCOVER_MAX_BODY_SIZE,
+        )
+
+        if body is None:
+            await self._json(send, 400, {"error": "invalid_json"})
+            return
+
+        if not isinstance(body, dict):
+            await self._json(
+                send,
+                400,
+                {"error": "request_body_must_be_object"},
+            )
+            return
+
+        country = body.get("country")
+        categories = body.get("categories", [])
+        query = body.get("query", "")
+        limit = body.get("limit", 10)
+
+        if not isinstance(country, str) or not country.strip():
+            await self._json(send, 400, {"error": "country_required"})
+            return
+
+        if not isinstance(categories, list):
+            await self._json(
+                send,
+                400,
+                {"error": "categories_must_be_list"},
+            )
+            return
+
+        if not isinstance(query, str):
+            await self._json(
+                send,
+                400,
+                {"error": "query_must_be_string"},
+            )
+            return
+
+        if not isinstance(limit, int) or isinstance(limit, bool):
+            await self._json(send, 400, {"error": "limit_must_be_integer"})
+            return
+
+        try:
+            result = self.discovery_service.discover(
+                country=country,
+                categories=categories,
+                query=query,
+                limit=limit,
+            )
+        except ValueError as exc:
+            message = str(exc)
+            if message.startswith("unsupported_category:"):
+                await self._json(
+                    send,
+                    400,
+                    {
+                        "error": "unsupported_category",
+                        "category": message.split(":", 1)[1],
+                    },
+                )
+                return
+
+            await self._json(
+                send,
+                400,
+                {"error": message},
+            )
+            return
+        except Exception:
+            await self._json(
+                send,
+                502,
+                {"error": "discovery_failed"},
+            )
+            return
+
+        await self._json(send, 200, result)
+
     async def _run_analysis(self, body, send):
         if not isinstance(body, dict):
             await self._json(
                 send,
                 400,
-                {
-                    "error": "request_body_must_be_object",
-                },
+                {"error": "request_body_must_be_object"},
             )
             return
 
@@ -208,32 +273,17 @@ class OpenRadarAPI:
             await self._json(
                 send,
                 400,
-                {
-                    "error": "opportunities_must_be_list",
-                },
+                {"error": "opportunities_must_be_list"},
             )
             return
 
         if not isinstance(country, str):
-            await self._json(
-                send,
-                400,
-                {
-                    "error": "country_required",
-                },
-            )
+            await self._json(send, 400, {"error": "country_required"})
             return
 
         country = country.strip()
-
         if not country:
-            await self._json(
-                send,
-                400,
-                {
-                    "error": "country_required",
-                },
-            )
+            await self._json(send, 400, {"error": "country_required"})
             return
 
         try:
@@ -242,20 +292,10 @@ class OpenRadarAPI:
                 country,
             )
         except Exception:
-            await self._json(
-                send,
-                500,
-                {
-                    "error": "analysis_failed",
-                },
-            )
+            await self._json(send, 500, {"error": "analysis_failed"})
             return
 
-        await self._json(
-            send,
-            200,
-            result,
-        )
+        await self._json(send, 200, result)
 
     async def _read_body(self, receive, max_body_size=None):
         chunks = []
@@ -272,62 +312,36 @@ class OpenRadarAPI:
             if message.get("type") != "http.request":
                 continue
 
-            chunk = message.get(
-                "body",
-                b"",
-            )
-
+            chunk = message.get("body", b"")
             if not isinstance(chunk, bytes):
                 return None
 
             total_size += len(chunk)
-
             if total_size > limit:
                 return None
 
             chunks.append(chunk)
 
-            if not message.get(
-                "more_body",
-                False,
-            ):
+            if not message.get("more_body", False):
                 break
 
         raw = b"".join(chunks)
-
         if not raw:
             return None
 
         try:
-            return json.loads(
-                raw.decode("utf-8")
-            )
-        except (
-            UnicodeDecodeError,
-            json.JSONDecodeError,
-        ):
+            return json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
             return None
 
-    async def _json(
-        self,
-        send,
-        status,
-        payload,
-    ):
-        body = json.dumps(
-            payload
-        ).encode("utf-8")
+    async def _json(self, send, status, payload):
+        body = json.dumps(payload).encode("utf-8")
 
         await send(
             {
                 "type": "http.response.start",
                 "status": status,
-                "headers": [
-                    [
-                        b"content-type",
-                        b"application/json",
-                    ]
-                ],
+                "headers": [[b"content-type", b"application/json"]],
             }
         )
 
