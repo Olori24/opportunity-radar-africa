@@ -2,8 +2,8 @@ class OpportunityIngestion:
     """
     Normalize raw opportunity data into a predictable structure.
 
-    This class does not fetch remote data, score opportunities,
-    rank them, or make recommendations.
+    Source metadata is preserved because verification, trust, eligibility,
+    and freshness are part of the intelligence pipeline.
     """
 
     FIELDS = (
@@ -21,6 +21,12 @@ class OpportunityIngestion:
         "source_url",
         "verification_status",
         "fit_score",
+        "source_id",
+        "source_reliability",
+        "eligibility_basis",
+        "published_date",
+        "source_notice_id",
+        "fetched_at",
     )
 
     def normalize(self, raw):
@@ -50,14 +56,9 @@ class OpportunityIngestion:
         return result
 
     def normalize_many(self, opportunities):
-        """
-        Normalize multiple opportunities while preserving order.
-        """
+        """Normalize multiple opportunities while preserving order."""
 
         if not opportunities:
             return []
 
-        return [
-            self.normalize(opportunity)
-            for opportunity in opportunities
-        ]
+        return [self.normalize(opportunity) for opportunity in opportunities]
