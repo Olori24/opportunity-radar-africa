@@ -49,12 +49,14 @@ class FakeEngine:
 def test_discovery_runs_all_sources_normalization_deduplication_and_analysis():
     world_bank = FakeSource()
     nigeria = FakeSource(title="Grant A", category="grant")
+    afdb = FakeSource(title="EOI - Nigeria - Consulting A", category="consulting")
     service = OpportunityDiscoveryService(
         radar_engine=FakeEngine(),
         ingestion=FakeIngestion(),
         deduplicator=FakeDeduplicator(),
         world_bank_source=world_bank,
         nigeria_official_source=nigeria,
+        afdb_source=afdb,
     )
 
     result = service.discover(
@@ -75,20 +77,24 @@ def test_discovery_runs_all_sources_normalization_deduplication_and_analysis():
     assert {source["id"] for source in result["sources"]} == {
         "world-bank",
         "nigeria-official-programmes",
+        "afdb-procurement",
     }
     assert world_bank.calls == [("Nigeria", ["procurement", "grant"], "digital", 5)]
     assert nigeria.calls == [("Nigeria", ["procurement", "grant"], "digital", 5)]
+    assert afdb.calls == [("Nigeria", ["procurement", "grant"], "digital", 5)]
 
 
 def test_discovery_accepts_public_opportunity_categories():
     source = FakeSource()
     nigeria = FakeSource(title="Grant A", category="grant")
+    afdb = FakeSource()
     service = OpportunityDiscoveryService(
         radar_engine=FakeEngine(),
         ingestion=FakeIngestion(),
         deduplicator=FakeDeduplicator(),
         world_bank_source=source,
         nigeria_official_source=nigeria,
+        afdb_source=afdb,
     )
 
     categories = [
@@ -107,6 +113,7 @@ def test_discovery_accepts_public_opportunity_categories():
     assert result["query"]["categories"] == categories
     assert source.calls == [("Nigeria", categories, None, 5)]
     assert nigeria.calls == [("Nigeria", categories, None, 5)]
+    assert afdb.calls == [("Nigeria", categories, None, 5)]
 
 
 def test_discovery_normalizes_and_deduplicates_categories():
@@ -116,6 +123,7 @@ def test_discovery_normalizes_and_deduplicates_categories():
         deduplicator=FakeDeduplicator(),
         world_bank_source=FakeSource(),
         nigeria_official_source=FakeSource(title="Grant A", category="grant"),
+        afdb_source=FakeSource(),
     )
 
     result = service.discover(
@@ -133,6 +141,7 @@ def test_discovery_rejects_unknown_category():
         deduplicator=FakeDeduplicator(),
         world_bank_source=FakeSource(),
         nigeria_official_source=FakeSource(title="Grant A", category="grant"),
+        afdb_source=FakeSource(),
     )
 
     try:
