@@ -209,6 +209,11 @@ class OpenRadarAPI:
             )
             return
 
+        category_error = self._validate_discover_categories(categories)
+        if category_error is not None:
+            await self._json(send, 400, category_error)
+            return
+
         if not isinstance(query, str):
             await self._json(
                 send,
@@ -256,6 +261,24 @@ class OpenRadarAPI:
             return
 
         await self._json(send, 200, result)
+
+    @staticmethod
+    def _validate_discover_categories(categories):
+        """Validate categories at the API boundary before discovery executes."""
+        supported = OpportunityDiscoveryService.SUPPORTED_CATEGORIES
+
+        for value in categories:
+            if not isinstance(value, str):
+                return {"error": "categories_must_contain_strings"}
+
+            normalized = value.strip().lower()
+            if normalized and normalized not in supported:
+                return {
+                    "error": "unsupported_category",
+                    "category": normalized,
+                }
+
+        return None
 
     async def _run_analysis(self, body, send):
         if not isinstance(body, dict):
