@@ -66,3 +66,5 @@ MIT
 ---
 
 **Engineered with OAE™ — Open Autonomous Engineer**
+
+> Professionalization is evidence-driven: OAE™ changes are verified before they are accepted.
