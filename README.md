@@ -1,67 +1,32 @@
+<div align="center">
+
 # Opportunity Radar Africa
 
-> AI-powered discovery of grants, jobs, scholarships, fellowships, and startup opportunities across Africa.
+**AI-powered discovery of opportunities across Africa.**
 
-**OAE™ Engineering Standard**
+[![Documentation standard](https://img.shields.io/badge/README-Premium%20Standard-111827?style=flat-square)](#documentation-standard)
+[![GitHub](https://img.shields.io/badge/GitHub-Olori24-181717?style=flat-square&logo=github)](https://github.com/Olori24)
 
-This repository is engineered and progressively maintained under the **Open Autonomous Engineer (OAE™)** engineering standard: modular architecture, security-first development, automated verification, explainable engineering decisions, and continuous improvement.
+</div>
 
-## Description
+![Opportunity Radar Africa architecture overview](./docs/assets/repo-hero.svg)
 
-Opportunity Radar Africa is an AI-powered platform for discovering and evaluating opportunities across Africa.
+> **Repository status:** Active development. This README separates implemented repository capabilities from roadmap and environment-dependent work.
 
-The project is being developed as a real-world benchmark for autonomous engineering workflows and is designed to support reliable opportunity ingestion, intelligence, verification, and ranking.
+## Documentation standard
 
-## Technology
+This repository follows the premium documentation standard established for NSMS: strong product positioning, visual orientation, architecture, security boundaries, setup, validation evidence, maturity tracking, roadmap separation, and honest production-status language.
 
-- **Language:** Python
-- **Framework:** FastAPI
-- **Database:** PostgreSQL
-- **Testing:** pytest
-- **CI:** GitHub Actions
-- **Containerization:** Docker
+| Evidence label | Meaning |
+|---|---|
+| **IMPLEMENTED** | Present in the repository. |
+| **TESTED** | Supported by an executed test or CI result. |
+| **DEPLOYED** | A deployment target/configuration exists. |
+| **VERIFIED IN PRODUCTION** | Confirmed with production evidence. |
+| **MEASURED** | Backed by an actual measurement. |
+| **ROADMAP** | Planned work, not a shipped capability. |
 
-## Engineering Standards
-
-OAE™ applies the following principles to this repository:
-
-- Security first
-- Human approval for consequential changes
-- Verification required
-- Deterministic behavior where practical
-- Modular architecture
-- Test before integration
-- Preserve existing behavior unless change is intentional
-- Explain engineering decisions
-- Continuous repository improvement
-
-## Development Workflow
-
-```text
-Analyze
-  ↓
-Review
-  ↓
-Plan
-  ↓
-Human Approval
-  ↓
-Implement
-  ↓
-Test
-  ↓
-Verify
-  ↓
-Re-analyze
-```
-
-## Status
-
-Active development. The repository is progressively hardened and professionalized through OAE™ engineering review and verification.
-
-## License
-
-MIT
+The existing project-specific technical documentation below remains the source for detailed implementation information.
 
 ---
 
